@@ -13,7 +13,6 @@ app.use(express.json());
 //  MONGODB DATABASE USER PASSWORD
 
 const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.udorxk7.mongodb.net/?retryWrites=true&w=majority`;
-console.log(uri);
 
 // Create a MongoClient with a MongoClientOptions object to set the Stable API version
 const client = new MongoClient(uri, {
@@ -27,7 +26,7 @@ const client = new MongoClient(uri, {
 async function run() {
   try {
     // Connect the client to the server	(optional starting in v4.7)
-    await client.connect();
+    // await client.connect();
 
     const productsCollection = client.db("productsDB").collection("products");
     const cartCollection = client.db("productsDB").collection("myCart");
@@ -51,7 +50,6 @@ async function run() {
       const id = req.params.id;
       const query = { _id: new ObjectId(id) };
       const result = await productsCollection.findOne(query);
-      console.log(query);
       res.send(result);
     });
 
@@ -68,7 +66,6 @@ async function run() {
       const newProduct = req.body;
       const result = await productsCollection.insertOne(newProduct);
       res.send(result);
-      console.log(result);
     });
 
     //cart section
@@ -87,6 +84,27 @@ async function run() {
         _id: new ObjectId(id),
       };
       const result = await cartCollection.deleteOne(query);
+      res.send(result);
+    });
+
+    //update operation
+
+    app.put("/products/:brand/:id", async (req, res) => {
+      const id = req.params.id;
+      const data = req.body;
+      const filter = { _id: new ObjectId(id) };
+      const updatedProduct = {
+        $set: {
+          name: data.name,
+          brand: data.brand,
+          category: data.category,
+          price: data.price,
+          details: data.details,
+          rating: data.rating,
+          photo: data.photo,
+        }
+      }
+      const result = await productsCollection.updateOne(filter, updatedProduct);
       res.send(result);
     });
 
