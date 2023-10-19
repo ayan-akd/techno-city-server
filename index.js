@@ -1,7 +1,7 @@
 const express = require("express");
 const cors = require("cors");
 require("dotenv").config();
-const { MongoClient, ServerApiVersion } = require("mongodb");
+const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
 const app = express();
 const port = process.env.PORT || 5000;
 
@@ -30,6 +30,7 @@ async function run() {
     await client.connect();
 
     const productsCollection = client.db("productsDB").collection("products");
+    const cartCollection = client.db("productsDB").collection("myCart");
 
     // get operation
 
@@ -37,7 +38,6 @@ async function run() {
       const products = productsCollection.find();
       const result = await products.toArray();
       res.send(result);
-      console.log(result);
     });
 
     app.get("/products/:brand", async (req, res) => {
@@ -46,7 +46,22 @@ async function run() {
       const result = await productsCollection.find(query).toArray();
       res.send(result);
     });
-    
+
+    app.get("/products/:brand/:id", async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: new ObjectId(id) };
+      const result = await productsCollection.findOne(query);
+      console.log(query);
+      res.send(result);
+    });
+
+    //cart section
+
+    app.get("/cart", async (req, res) => {
+      const cart = cartCollection.find();
+      const result = await cart.toArray();
+      res.send(result);
+    });
 
     //post operation
     app.post("/products", async (req, res) => {
@@ -54,6 +69,25 @@ async function run() {
       const result = await productsCollection.insertOne(newProduct);
       res.send(result);
       console.log(result);
+    });
+
+    //cart section
+
+    app.post("/cart", async (req, res) => {
+      const newCartItem = req.body;
+      const result = await cartCollection.insertOne(newCartItem);
+      res.send(result);
+    });
+
+    //delete operation
+
+    app.delete("/cart/:id", async (req, res) => {
+      const id = req.params.id;
+      const query = {
+        _id: new ObjectId(id),
+      };
+      const result = await cartCollection.deleteOne(query);
+      res.send(result);
     });
 
     // Send a ping to confirm a successful connection
@@ -69,9 +103,9 @@ async function run() {
 run().catch(console.dir);
 
 app.get("/", (req, res) => {
-  res.send("Crud is running...");
+  res.send("Server is running...");
 });
 
 app.listen(port, () => {
-  console.log(`Crud is Running on port ${port}`);
+  console.log(`Server is Running on port ${port}`);
 });
